@@ -1,52 +1,62 @@
-# Yield Prediction Project
+# Yield Prediction System
 
 ## Project Overview
-This project aims to predict crop yields using machine learning techniques. It includes data preprocessing, model training, and a web application for recommendations. The project also explores plant disease classification using deep learning.
+This project aims to predict the best crops for cultivation based on various environmental and soil parameters. It uses machine learning models to provide recommendations.
 
-## Project Structure
+## Directory Structure
 ```
-Yield_Prediction/
-├── app/
-│   ├── backend/        # Backend code for the web application
-│   ├── frontend/       # Frontend code for the web application
-├── Data-processed/     # Processed datasets
-├── data-row/           # Raw datasets
-├── models/             # Trained machine learning models
-├── notebooks/          # Jupyter notebooks for data preparation and analysis
-├── requirement.txt     # Python dependencies
+yield_Prediction_Sys/
+│
+├── data/
+│   ├── raw/                # Raw data files
+│   ├── processed/          # Processed data files
+│
+├── models/                 # Saved models
+│
+├── notebooks/              # Jupyter notebooks
+│
+├── src/                    # Source code
+│   ├── data_processing.py  # Data processing scripts
+│   ├── model_training.py   # Model training scripts
+│   ├── utils.py            # Utility functions
+│
+├── tests/                  # Unit tests
+│
+├── requirement.txt         # Python dependencies
+├── README.md               # Project documentation
+├── .gitignore              # Git ignore file
 ```
-
-## Notebooks
-- **Crop_data_prep.ipynb**: Data preparation for crop yield prediction.
-- **Crop_Recommendation_Model.ipynb**: Model training for crop recommendations.
-- **plant-disease-classification-resnet-99-2.ipynb**: Plant disease classification using ResNet.
 
 ## Setup Instructions
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/louatizine/yield_Prediction_Sys.git
    ```
+
 2. Navigate to the project directory:
    ```bash
-   cd Yield_Prediction
+   cd yield_Prediction_Sys
    ```
+
 3. Install dependencies:
    ```bash
    pip install -r requirement.txt
    ```
-4. Run the application:
-   - Navigate to the `app/` directory and follow the instructions for the backend and frontend.
 
-## Dependencies
-The project uses the following Python libraries:
-- Flask
-- scikit-learn
-- PyTorch
-- XGBoost
-- Jupyter
+4. Run Jupyter Notebook:
+   ```bash
+   jupyter notebook
+   ```
 
-Refer to `requirement.txt` for the complete list.
+## Usage
+- Use the notebooks in the `notebooks/` directory to explore data and train models.
+- Reusable scripts for data processing and model training are in the `src/` directory.
 
-## Contribution
-Feel free to fork the repository and submit pull requests for improvements.
+## Recent Updates
+- Fixed errors in the Jupyter notebook related to missing modules and data processing.
+- Added `ERRORS_AND_SOLUTIONS.md` to document encountered issues and their solutions.
+- Updated the notebook to ensure compatibility with `XGBoost` and other classifiers.
+
+## Contributing
+Feel free to submit issues or pull requests to improve the project.
 
