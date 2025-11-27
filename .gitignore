@@ -1,2 +1,13 @@
-# Ignore virtual environment
+# Ignore Python environment
 venv/
+.env/
+
+# Ignore GitHub workspace extra folder
+fresh-clone/
+
+# Ignore big/cache folders
+__pycache__/
+*.pyc
+
+# Ignore OS/system
+.DS_Store
