@@ -11,3 +11,7 @@ __pycache__/
 
 # Ignore OS/system
 .DS_Store
+
+# Ignore the Data directory containing large datasets
+Data/
+notebooks/.ipynb_checkpoints/
