@@ -23,3 +23,7 @@ This document tracks the errors encountered during the development of the Yield 
 ### Error 5: Incorrect Target Labels in Train-Test Split
 - **Description**: The original string labels were used instead of encoded numeric labels.
 - **Solution**: Updated `Ytrain` and `Ytest` to use the encoded `labels` variable.
+
+### Error 6: Torch Not Compiled with CUDA Enabled
+- **Description**: The error `AssertionError: Torch not compiled with CUDA enabled` occurred when attempting to use `.cuda()` on the model.
+- **Solution**: Updated the code to use the CPU instead of CUDA by explicitly setting the device to `torch.device("cpu")` and moving the model to the CPU using `.to(device)`. This ensures compatibility even without CUDA support.
