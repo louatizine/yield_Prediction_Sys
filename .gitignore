@@ -16,3 +16,7 @@ __pycache__/
 Data/
 notebooks/.ipynb_checkpoints/
 *.pth
+ 
+# Ignore root models folder and serialized model artifacts
+ /models/
+ *.pkl
