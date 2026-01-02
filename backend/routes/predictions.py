@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Dict
+from datetime import datetime
 from models.prediction import (
     CropPredictionInput, 
     CropPredictionResponse,
@@ -11,6 +12,7 @@ from models.prediction import (
 )
 from models.user import UserResponse
 from utils.auth import get_current_user
+from utils.database import get_crop_predictions_collection, get_fertilizer_predictions_collection
 from services.ml_model import ml_service
 
 router = APIRouter(prefix="/api/predict", tags=["Predictions"])
@@ -46,6 +48,28 @@ async def predict_crop(
         # Map prediction to crop name
         crop_name = CROP_MAPPING.get(crop_id, "Unknown Crop")
         
+        # Save prediction to database
+        crop_predictions_collection = get_crop_predictions_collection()
+        prediction_record = {
+            "user_id": current_user["id"],
+            "user_email": current_user["email"],
+            "input_data": {
+                "N": input_data.N,
+                "P": input_data.P,
+                "K": input_data.K,
+                "temperature": input_data.temperature,
+                "humidity": input_data.humidity,
+                "ph": input_data.ph,
+                "rainfall": input_data.rainfall
+            },
+            "prediction": {
+                "crop": crop_name,
+                "crop_id": crop_id
+            },
+            "created_at": datetime.utcnow()
+        }
+        await crop_predictions_collection.insert_one(prediction_record)
+        
         return CropPredictionResponse(
             success=True,
             crop=crop_name,
@@ -54,6 +78,9 @@ async def predict_crop(
         )
         
     except Exception as e:
+        import traceback
+        print("ERROR in crop prediction:")
+        print(traceback.format_exc())
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Prediction failed: {str(e)}"
@@ -74,11 +101,7 @@ async def predict_fertilizer(
     - Crop type being grown
     """
     try:
-        # Encode crop type (simplified - in production, use proper encoding)
-        crop_types = list(CROP_MAPPING.values())
-        crop_type_encoded = crop_types.index(input_data.crop_type.title()) if input_data.crop_type.title() in crop_types else 0
-        
-        # Prepare features
+        # Prepare features (same as crop prediction - the model was trained on the same features)
         features = [
             input_data.N,
             input_data.P,
@@ -86,8 +109,7 @@ async def predict_fertilizer(
             input_data.temperature,
             input_data.humidity,
             input_data.ph,
-            input_data.rainfall,
-            crop_type_encoded
+            input_data.rainfall
         ]
         
         # Get prediction from model
@@ -96,6 +118,30 @@ async def predict_fertilizer(
         # Map prediction to fertilizer name
         fertilizer_name = FERTILIZER_MAPPING.get(fertilizer_id, "10-26-26")
         explanation = FERTILIZER_EXPLANATIONS.get(fertilizer_name, "Recommended for optimal crop growth.")
+        
+        # Save prediction to database
+        fertilizer_predictions_collection = get_fertilizer_predictions_collection()
+        prediction_record = {
+            "user_id": current_user["id"],
+            "user_email": current_user["email"],
+            "input_data": {
+                "N": input_data.N,
+                "P": input_data.P,
+                "K": input_data.K,
+                "temperature": input_data.temperature,
+                "humidity": input_data.humidity,
+                "ph": input_data.ph,
+                "rainfall": input_data.rainfall,
+                "crop_type": input_data.crop_type
+            },
+            "prediction": {
+                "fertilizer": fertilizer_name,
+                "fertilizer_id": fertilizer_id,
+                "explanation": explanation
+            },
+            "created_at": datetime.utcnow()
+        }
+        await fertilizer_predictions_collection.insert_one(prediction_record)
         
         return FertilizerPredictionResponse(
             success=True,
@@ -106,6 +152,9 @@ async def predict_fertilizer(
         )
         
     except Exception as e:
+        import traceback
+        print("ERROR in fertilizer prediction:")
+        print(traceback.format_exc())
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Prediction failed: {str(e)}"
@@ -125,3 +174,57 @@ async def health_check():
         "model_loaded": True,
         "message": "XGBoost model is ready for predictions"
     }
+
+@router.get("/crop/history")
+async def get_crop_prediction_history(
+    limit: int = 10,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Get crop prediction history for the current user"""
+    try:
+        crop_predictions_collection = get_crop_predictions_collection()
+        predictions = await crop_predictions_collection.find(
+            {"user_id": current_user["id"]}
+        ).sort("created_at", -1).limit(limit).to_list(length=limit)
+        
+        # Convert ObjectId to string
+        for pred in predictions:
+            pred["_id"] = str(pred["_id"])
+        
+        return {
+            "success": True,
+            "count": len(predictions),
+            "predictions": predictions
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve history: {str(e)}"
+        )
+
+@router.get("/fertilizer/history")
+async def get_fertilizer_prediction_history(
+    limit: int = 10,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Get fertilizer prediction history for the current user"""
+    try:
+        fertilizer_predictions_collection = get_fertilizer_predictions_collection()
+        predictions = await fertilizer_predictions_collection.find(
+            {"user_id": current_user["id"]}
+        ).sort("created_at", -1).limit(limit).to_list(length=limit)
+        
+        # Convert ObjectId to string
+        for pred in predictions:
+            pred["_id"] = str(pred["_id"])
+        
+        return {
+            "success": True,
+            "count": len(predictions),
+            "predictions": predictions
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve history: {str(e)}"
+        )

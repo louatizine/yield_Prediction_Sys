@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import InputField from '../components/InputField';
 import Button from '../components/Button';
 import PredictionResultCard from '../components/PredictionResultCard';
-import { predictFertilizer } from '../services/predictionService';
+import DashboardLayout from '../components/DashboardLayout';
+import { predictFertilizer, getFertilizerHistory } from '../services/predictionService';
 
 const FertilizerRecommendation = () => {
   const [formData, setFormData] = useState({
@@ -18,6 +19,10 @@ const FertilizerRecommendation = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [showGuide, setShowGuide] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   const cropTypes = [
     'Rice', 'Maize', 'Chickpea', 'Kidney Beans', 'Pigeon Peas',
@@ -25,6 +30,38 @@ const FertilizerRecommendation = () => {
     'Banana', 'Mango', 'Grapes', 'Watermelon', 'Muskmelon',
     'Apple', 'Orange', 'Papaya', 'Coconut', 'Cotton', 'Jute', 'Coffee'
   ];
+
+  useEffect(() => {
+    if (showHistory) {
+      fetchHistory();
+    }
+  }, [showHistory]);
+
+  const fetchHistory = async () => {
+    setLoadingHistory(true);
+    try {
+      const data = await getFertilizerHistory();
+      setHistory(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Failed to fetch history:', err);
+      setHistory([]);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const loadExample = () => {
+    setFormData({
+      N: '37',
+      P: '25',
+      K: '18',
+      temperature: '25',
+      humidity: '65',
+      ph: '6.2',
+      rainfall: '180',
+      crop_type: 'Rice',
+    });
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -54,8 +91,16 @@ const FertilizerRecommendation = () => {
       const response = await predictFertilizer(payload);
       setResult(response);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to get fertilizer prediction. Please try again.');
-      setResult({ success: false, message: err.response?.data?.detail || 'Prediction failed' });
+      let errorMessage = 'Failed to get fertilizer prediction. Please try again.';
+      if (err.response?.data?.detail) {
+        if (Array.isArray(err.response.data.detail)) {
+          errorMessage = err.response.data.detail.map(e => `${e.loc[1]}: ${e.msg}`).join(', ');
+        } else {
+          errorMessage = err.response.data.detail;
+        }
+      }
+      setError(errorMessage);
+      setResult({ success: false, message: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -94,16 +139,178 @@ const FertilizerRecommendation = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
+    <DashboardLayout>
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl mb-4 shadow-lg">
-            <span className="text-3xl">🧪</span>
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl mb-4 shadow-lg">
+            <span className="text-3xl">🌱</span>
           </div>
           <h1 className="text-4xl font-bold text-gray-800 mb-2">Fertilizer Recommendation</h1>
-          <p className="text-gray-600">Get the perfect fertilizer for your crop and soil conditions</p>
+          <p className="text-gray-600">Get optimal fertilizer suggestions for your crops</p>
         </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-4 mb-6 justify-center flex-wrap">
+          <button
+            onClick={() => setShowGuide(!showGuide)}
+            className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg font-medium hover:scale-105"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {showGuide ? 'Hide' : 'Show'} User Guide
+          </button>
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            className="px-5 py-2.5 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl hover:from-purple-600 hover:to-purple-700 transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg font-medium hover:scale-105"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {showHistory ? 'Hide' : 'View'} History
+          </button>
+          <button
+            onClick={loadExample}
+            className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl hover:from-amber-600 hover:to-amber-700 transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg font-medium hover:scale-105"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Load Example
+          </button>
+        </div>
+
+        {/* User Guide */}
+        {showGuide && (
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-lg p-6 mb-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              How to Use Fertilizer Recommendation
+            </h2>
+            
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold text-lg text-gray-800 mb-2">🎯 Purpose</h3>
+                <p className="text-gray-700">Get precise fertilizer recommendations based on your current soil nutrients and the specific crop you're growing. This helps optimize yield while reducing waste and environmental impact.</p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-lg text-gray-800 mb-2">📋 Required Information</h3>
+                <ul className="list-disc list-inside text-gray-600 ml-4 space-y-2">
+                  <li><strong>Current Soil Nutrients (N-P-K):</strong> Get a recent soil test to know existing nutrient levels</li>
+                  <li><strong>Crop Type:</strong> Select the crop you're planning to grow or are currently growing</li>
+                  <li><strong>Climate Data:</strong> Temperature, humidity, and expected rainfall</li>
+                  <li><strong>Soil pH:</strong> Affects nutrient availability to plants</li>
+                </ul>
+              </div>
+
+              <div className="bg-white rounded-lg p-4 border-2 border-blue-200">
+                <h3 className="font-semibold text-lg text-gray-800 mb-3">💡 Example: Rice Cultivation</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div><span className="text-gray-600">N:</span> <span className="font-semibold">37 kg/ha</span></div>
+                  <div><span className="text-gray-600">P:</span> <span className="font-semibold">25 kg/ha</span></div>
+                  <div><span className="text-gray-600">K:</span> <span className="font-semibold">18 kg/ha</span></div>
+                  <div><span className="text-gray-600">Temp:</span> <span className="font-semibold">25°C</span></div>
+                  <div><span className="text-gray-600">Humidity:</span> <span className="font-semibold">65%</span></div>
+                  <div><span className="text-gray-600">pH:</span> <span className="font-semibold">6.2</span></div>
+                  <div><span className="text-gray-600">Rainfall:</span> <span className="font-semibold">180mm</span></div>
+                  <div><span className="text-gray-600">Crop:</span> <span className="font-semibold text-green-600">Rice</span></div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-lg text-gray-800 mb-2">🌾 Understanding N-P-K Ratio</h3>
+                <div className="grid md:grid-cols-3 gap-3 text-sm">
+                  <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+                    <div className="font-semibold text-amber-800 mb-1">Nitrogen (N)</div>
+                    <div className="text-gray-600">Promotes leafy green growth. Essential for photosynthesis.</div>
+                  </div>
+                  <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                    <div className="font-semibold text-blue-800 mb-1">Phosphorus (P)</div>
+                    <div className="text-gray-600">Strengthens roots. Critical for flowering and fruiting.</div>
+                  </div>
+                  <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                    <div className="font-semibold text-purple-800 mb-1">Potassium (K)</div>
+                    <div className="text-gray-600">Improves disease resistance and overall plant health.</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <h3 className="font-semibold text-lg text-green-800 mb-2">✅ Best Practices</h3>
+                <ul className="list-disc list-inside text-gray-700 space-y-1 text-sm">
+                  <li>Test your soil every 6-12 months for accurate nutrient levels</li>
+                  <li>Apply fertilizers during the crop's active growth phase</li>
+                  <li>Split applications are better than single large doses</li>
+                  <li>Consider organic alternatives when possible</li>
+                  <li>Store fertilizers in a cool, dry place</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* History View */}
+        {showHistory && (
+          <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Recommendation History
+            </h2>
+            
+            {loadingHistory ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+                <p className="text-gray-600 mt-4">Loading history...</p>
+              </div>
+            ) : history.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p>No recommendations yet. Make your first prediction!</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fertilizer</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Crop</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Soil (N-P-K)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {history.map((item, index) => (
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {new Date(item.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <span className="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                            {item.prediction.fertilizer}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {item.input_data.crop_type}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {item.input_data.N}-{item.input_data.P}-{item.input_data.K}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Form Card */}
         {!result && (
@@ -254,7 +461,7 @@ const FertilizerRecommendation = () => {
         {/* Result Display */}
         <PredictionResultCard result={result} type="fertilizer" onReset={handleReset} />
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

@@ -39,6 +39,8 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     """Get current user from JWT token"""
+    from utils.database import get_users_collection
+    
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -52,4 +54,14 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     except JWTError:
         raise credentials_exception
     
-    return {"email": email}
+    # Fetch user from database
+    users_collection = get_users_collection()
+    user = await users_collection.find_one({"email": email})
+    
+    if user is None:
+        raise credentials_exception
+    
+    # Convert ObjectId to string
+    user["id"] = str(user["_id"])
+    
+    return user

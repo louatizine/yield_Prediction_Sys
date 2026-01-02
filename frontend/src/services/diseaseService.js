@@ -24,3 +24,10 @@ export const checkDiseaseModelHealth = async () => {
   const response = await axios.get(`${API_URL}/health`);
   return response.data;
 };
+
+export const getDiseaseHistory = async () => {
+  const response = await axios.get(`${API_URL}/history`, {
+    headers: getAuthHeader(),
+  });
+  return response.data;
+};

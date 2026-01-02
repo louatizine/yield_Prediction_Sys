@@ -14,25 +14,32 @@ load_dotenv()
 
 app = FastAPI(title="AgriDoctor API", description="Smart Agriculture Prediction System")
 
+# CORS middleware for frontend connection - MUST be added before routes
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:5174", 
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+)
+
 @app.on_event("startup")
 async def startup_db_client():
     await connect_to_mongo()
     # Load ML models at startup
     ml_service.load_model()
-    disease_service.load_model()
+    disease_service.load_model()  # Will return False if model file not found, but won't crash
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
     await close_mongo_connection()
-
-# CORS middleware for frontend connection
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],  # Vite default port
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # Include routers
 app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi.responses import JSONResponse
 from models.user import UserCreate, UserLogin, UserResponse, Token
 from utils.database import get_users_collection
 from utils.auth import get_password_hash, verify_password, create_access_token, get_current_user
@@ -6,6 +7,21 @@ from datetime import datetime
 from bson import ObjectId
 
 router = APIRouter()
+
+# Handle OPTIONS requests explicitly
+@router.options("/register")
+@router.options("/login")
+@router.options("/me")
+async def options_handler():
+    """Handle CORS preflight requests"""
+    return JSONResponse(
+        content={"message": "OK"},
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
 
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
 async def register(user: UserCreate):

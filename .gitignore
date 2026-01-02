@@ -15,8 +15,3 @@ __pycache__/
 # Ignore the Data directory containing large datasets
 Data/
 notebooks/.ipynb_checkpoints/
-*.pth
- 
-# Ignore root models folder and serialized model artifacts
- /models/
- *.pkl

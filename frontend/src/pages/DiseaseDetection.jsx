@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import DashboardLayout from '../components/DashboardLayout';
 import { detectDisease } from '../services/diseaseService';
 
 const DiseaseDetection = () => {
@@ -65,7 +66,7 @@ const DiseaseDetection = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 py-8 px-4">
+    <DashboardLayout>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -130,10 +131,10 @@ const DiseaseDetection = () => {
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className={`w-full py-3 rounded-xl font-semibold transition-all shadow-lg ${
+                className={`w-full py-3.5 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl ${
                   loading
                     ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white'
+                    : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white hover:scale-105 active:scale-95'
                 }`}
               >
                 {loading ? (
@@ -237,7 +238,7 @@ const DiseaseDetection = () => {
 
                 <button
                   onClick={handleReset}
-                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg"
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3.5 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
                 >
                   Analyze Another Image
                 </button>
@@ -247,7 +248,7 @@ const DiseaseDetection = () => {
                 <p className="text-red-700 mb-4">{result.message || 'Detection failed'}</p>
                 <button
                   onClick={handleReset}
-                  className="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-700 transition-all"
+                  className="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-red-600 hover:to-red-700 transition-all shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
                 >
                   Try Again
                 </button>
@@ -256,7 +257,7 @@ const DiseaseDetection = () => {
           </div>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

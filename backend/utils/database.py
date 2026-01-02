@@ -38,3 +38,18 @@ def get_users_collection():
     """Get users collection"""
     database = get_database()
     return database["users"]
+
+def get_crop_predictions_collection():
+    """Get crop predictions collection"""
+    database = get_database()
+    return database["crop_predictions"]
+
+def get_fertilizer_predictions_collection():
+    """Get fertilizer predictions collection"""
+    database = get_database()
+    return database["fertilizer_predictions"]
+
+def get_disease_detections_collection():
+    """Get disease detections collection"""
+    database = get_database()
+    return database["disease_detections"]
